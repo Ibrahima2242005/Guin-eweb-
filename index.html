@@ -4,111 +4,208 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LinkUp</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-polyfill@9.0.0/dist/umd/polyfill.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #f4f6f8; color: #333; padding-bottom: 70px; }
-    
-    /* Header */
+    body { background-color: #f4f6f8; color: #333; }
+
+    /* AUTH SCREEN */
+    #auth-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .auth-card { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    .auth-card h2 { color: #00875a; text-align: center; margin-bottom: 20px; font-size: 1.8rem; }
+    .input-group { margin-bottom: 15px; }
+    .input-group label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #555; }
+    .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-size: 0.95rem; }
+    .auth-btn { width: 100%; background: #00875a; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .toggle-auth { text-align: center; margin-top: 15px; font-size: 0.85rem; color: #666; }
+    .toggle-auth span { color: #00875a; font-weight: bold; cursor: pointer; text-decoration: underline; }
+
+    /* MAIN APP SCREEN */
+    #app-screen { display: none; padding-bottom: 70px; }
     header { background: #00875a; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; font-weight: bold; font-size: 1.2rem; }
-    
-    /* Container */
     .container { max-width: 600px; margin: 0 auto; padding: 15px; }
 
-    /* Sections / Tabs */
+    /* SECTIONS & TABS */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Formulaire Publication */
+    /* POST BOX */
     .post-box { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
     .post-box textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; resize: none; height: 80px; outline: none; }
     .post-box button { background: #00875a; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; float: right; margin-top: 10px; }
 
-    /* Cards Publications */
+    /* POST CARDS */
     .post-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
     .avatar { width: 40px; height: 40px; background: #00875a; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     .user-info h4 { font-size: 0.95rem; }
     .user-info span { font-size: 0.8rem; color: #666; }
     .post-content { font-size: 0.95rem; line-height: 1.4; margin-bottom: 10px; }
-    
-    /* Bottom Navigation */
+
+    /* BOTTOM NAV */
     nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; }
     .nav-btn { background: none; border: none; color: #666; font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 25%; }
     .nav-btn.active { color: #00875a; font-weight: bold; }
     .nav-btn svg { width: 22px; height: 22px; fill: currentColor; }
 
-    /* Empty State */
     .empty-state { text-align: center; color: #777; margin-top: 40px; font-size: 0.95rem; }
+    .btn-logout { background: #d9534f; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; }
   </style>
 </head>
 <body>
 
-  <header>LinkUp</header>
-
-  <div class="container">
-    
-    <!-- ONGLET ACCUEIL -->
-    <section id="tab-home" class="tab-content active">
-      <div class="post-box">
-        <textarea id="postInput" placeholder="Exprimez-vous..."></textarea>
-        <button onclick="createPost()">Publier</button>
-        <div style="clear:both;"></div>
-      </div>
+  <!-- ÉCRAN D'AUTHENTIFICATION -->
+  <div id="auth-screen">
+    <div class="auth-card">
+      <h2 id="auth-title">Connexion à LinkUp</h2>
       
-      <div id="postsFeed">
-        <div class="empty-state">Chargement du fil d'actualité...</div>
+      <div class="input-group" id="name-group" style="display: none;">
+        <label>Nom complet</label>
+        <input type="text" id="auth-name" placeholder="Ex: Ibrahima Bah">
       </div>
-    </section>
 
-    <!-- ONGLET EXPLORER -->
-    <section id="tab-explore" class="tab-content">
-      <h3>Explorer</h3>
-      <div class="empty-state">Découvrez de nouveaux membres et tendances bientôt ici.</div>
-    </section>
+      <div class="input-group">
+        <label>Adresse E-mail</label>
+        <input type="email" id="auth-email" placeholder="votre@email.com">
+      </div>
 
-    <!-- ONGLET MESSAGES -->
-    <section id="tab-messages" class="tab-content">
-      <h3>Messages</h3>
-      <div class="empty-state">Aucune discussion en cours.</div>
-    </section>
+      <div class="input-group">
+        <label>Mot de passe</label>
+        <input type="password" id="auth-password" placeholder="••••••••">
+      </div>
 
-    <!-- ONGLET PROFIL -->
-    <section id="tab-profile" class="tab-content">
-      <h3>Mon Profil</h3>
-      <div id="profileDetails" class="empty-state">Chargement de votre profil...</div>
-    </section>
+      <button class="auth-btn" id="auth-submit-btn" onclick="handleAuth()">Se connecter</button>
 
+      <div class="toggle-auth">
+        <span id="auth-toggle-text" onclick="toggleAuthMode()">Pas encore de compte ? S'inscrire</span>
+      </div>
+    </div>
   </div>
 
-  <!-- NAVIGATION BAS -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" onclick="switchTab('tab-home', this)">
-      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      Accueil
-    </button>
-    <button class="nav-btn" onclick="switchTab('tab-explore', this)">
-      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-      Explorer
-    </button>
-    <button class="nav-btn" onclick="switchTab('tab-messages', this)">
-      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-      Messages
-    </button>
-    <button class="nav-btn" onclick="switchTab('tab-profile', this)">
-      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-      Profil
-    </button>
-  </nav>
+  <!-- APPLICATION PRINCIPALE -->
+  <div id="app-screen">
+    <header>LinkUp</header>
+
+    <div class="container">
+      
+      <!-- ONGLET ACCUEIL -->
+      <section id="tab-home" class="tab-content active">
+        <div class="post-box">
+          <textarea id="postInput" placeholder="Exprimez-vous..."></textarea>
+          <button onclick="createPost()">Publier</button>
+          <div style="clear:both;"></div>
+        </div>
+        <div id="postsFeed">
+          <div class="empty-state">Chargement...</div>
+        </div>
+      </section>
+
+      <!-- ONGLET EXPLORER -->
+      <section id="tab-explore" class="tab-content">
+        <h3>Explorer</h3>
+        <div class="empty-state">Découvrez de nouveaux membres et tendances bientôt ici.</div>
+      </section>
+
+      <!-- ONGLET MESSAGES -->
+      <section id="tab-messages" class="tab-content">
+        <h3>Messages</h3>
+        <div class="empty-state">Aucune discussion en cours.</div>
+      </section>
+
+      <!-- ONGLET PROFIL -->
+      <section id="tab-profile" class="tab-content">
+        <h3>Mon Profil</h3>
+        <div id="profileDetails" class="empty-state">Chargement...</div>
+      </section>
+
+    </div>
+
+    <!-- BARRE DE NAVIGATION INFÉRIEURE -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" onclick="switchTab('tab-home', this)">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        Accueil
+      </button>
+      <button class="nav-btn" onclick="switchTab('tab-explore', this)">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        Explorer
+      </button>
+      <button class="nav-btn" onclick="switchTab('tab-messages', this)">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        Messages
+      </button>
+      <button class="nav-btn" onclick="switchTab('tab-profile', this)">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        Profil
+      </button>
+    </nav>
+  </div>
 
   <script>
-    // Configuration Supabase
+    // Config Supabase
     const SUPABASE_URL = 'https://TON-PROJET.supabase.co';
     const SUPABASE_KEY = 'TA-CLE-ANON-PUBLIC';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 1. Navigation entre onglets
+    let isSignUpMode = false;
+
+    // Basculer entre Inscription et Connexion
+    function toggleAuthMode() {
+      isSignUpMode = !isSignUpMode;
+      document.getElementById('auth-title').innerText = isSignUpMode ? "Inscription à LinkUp" : "Connexion à LinkUp";
+      document.getElementById('name-group').style.display = isSignUpMode ? "block" : "none";
+      document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "S'inscrire" : "Se connecter";
+      document.getElementById('auth-toggle-text').innerText = isSignUpMode ? "Déjà un compte ? Se connecter" : "Pas encore de compte ? S'inscrire";
+    }
+
+    // Gestion Connexion / Inscription
+    async function handleAuth() {
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value.trim();
+      const name = document.getElementById('auth-name').value.trim();
+
+      if (!email || !password) return alert("Veuillez remplir l'email et le mot de passe.");
+
+      if (isSignUpMode) {
+        if (!name) return alert("Veuillez entrer votre nom.");
+        
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: email,
+          password: password,
+          options: { data: { full_name: name } }
+        });
+
+        if (error) alert("Erreur d'inscription : " + error.message);
+        else {
+          alert("Inscription réussie !");
+          checkSession();
+        }
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) alert("Erreur de connexion : " + error.message);
+        else checkSession();
+      }
+    }
+
+    // Vérifier si l'utilisateur est connecté
+    async function checkSession() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      
+      if (session) {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'block';
+        fetchPosts();
+      } else {
+        document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('app-screen').style.display = 'none';
+      }
+    }
+
+    // Navigation entre onglets
     function switchTab(tabId, btnElement) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -120,32 +217,31 @@
       if (tabId === 'tab-profile') fetchProfile();
     }
 
-    // 2. Charger les publications depuis Supabase
+    // Charger les publications
     async function fetchPosts() {
       const feed = document.getElementById('postsFeed');
       
       const { data: posts, error } = await supabaseClient
         .from('posts')
-        .select('*, profiles(full_name, username)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        feed.innerHTML = '<div class="empty-state">Erreur lors de la récupération des messages.</div>';
+        feed.innerHTML = '<div class="empty-state">Erreur de chargement.</div>';
         return;
       }
 
       if (!posts || posts.length === 0) {
-        feed.innerHTML = '<div class="empty-state">Aucune publication pour le moment. Soyez le premier à publier !</div>';
+        feed.innerHTML = '<div class="empty-state">Aucune publication. Soyez le premier !</div>';
         return;
       }
 
       feed.innerHTML = posts.map(post => `
         <div class="post-card">
           <div class="post-header">
-            <div class="avatar">${(post.profiles?.full_name || 'U')[0].toUpperCase()}</div>
+            <div class="avatar">${(post.user_name || 'U')[0].toUpperCase()}</div>
             <div class="user-info">
-              <h4>${post.profiles?.full_name || 'Membre LinkUp'}</h4>
-              <span>@${post.profiles?.username || 'utilisateur'}</span>
+              <h4>${post.user_name || 'Membre LinkUp'}</h4>
             </div>
           </div>
           <div class="post-content">${post.content}</div>
@@ -153,62 +249,56 @@
       `).join('');
     }
 
-    // 3. Publier un nouveau message
+    // Publier un message
     async function createPost() {
       const input = document.getElementById('postInput');
       const text = input.value.trim();
 
-      if (!text) return alert('Veuillez écrire un texte avant de publier.');
+      if (!text) return alert('Écrivez un message.');
 
       const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return alert('Session expirée.');
 
-      if (!user) {
-        alert('Vous devez être connecté pour publier.');
-        return;
-      }
+      const userName = user.user_metadata?.full_name || user.email.split('@')[0];
 
       const { error } = await supabaseClient
         .from('posts')
-        .insert([{ content: text, user_id: user.id }]);
+        .insert([{ content: text, user_id: user.id, user_name: userName }]);
 
-      if (error) {
-        alert('Erreur de publication: ' + error.message);
-      } else {
+      if (error) alert('Erreur : ' + error.message);
+      else {
         input.value = '';
         fetchPosts();
       }
     }
 
-    // 4. Charger les données du profil
+    // Charger le Profil & Déconnexion
     async function fetchProfile() {
       const profileBox = document.getElementById('profileDetails');
       const { data: { user } } = await supabaseClient.auth.getUser();
 
-      if (!user) {
-        profileBox.innerHTML = '<p class="empty-state">Non connecté.</p>';
-        return;
-      }
+      if (!user) return;
 
-      const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const userName = user.user_metadata?.full_name || 'Utilisateur';
 
       profileBox.innerHTML = `
         <div style="background:white; padding:20px; border-radius:10px; text-align:center;">
-          <div class="avatar" style="width:60px; height:60px; font-size:1.5rem; margin:0 auto 10px;">${(profile?.full_name || 'U')[0]}</div>
-          <h3>${profile?.full_name || 'Utilisateur'}</h3>
-          <p style="color:#666;">@${profile?.username || 'pseudo'}</p>
+          <div class="avatar" style="width:60px; height:60px; font-size:1.5rem; margin:0 auto 10px;">${userName[0].toUpperCase()}</div>
+          <h3>${userName}</h3>
           <p style="color:#888; font-size:0.85rem; margin-top:5px;">${user.email}</p>
+          <button class="btn-logout" onclick="logout()">Se déconnecter</button>
         </div>
       `;
     }
 
-    // Chargement initial
-    window.onload = () => {
-      fetchPosts();
-    };
+    // Déconnexion
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      checkSession();
+    }
+
+    // Démarrage
+    window.onload = checkSession;
   </script>
 </body>
 </html>
